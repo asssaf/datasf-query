@@ -1,10 +1,10 @@
 # Implementation Plan - Build core CLI API query functionality with dynamic parameters and JSON output
 
 ## Phase 1: Project Setup and Core CLI Structure
-- [ ] Task: Initialize Python project and directory structure
+- [x] Task: Initialize Python project and directory structure [503b5dd]
     - [ ] Create `requirements.txt` with `click` and `requests`
     - [ ] Set up virtual environment and install dependencies
-- [ ] Task: Implement basic CLI entry point with Click
+- [x] Task: Implement basic CLI entry point with Click [19dfb2d]
     - [ ] Write tests for CLI argument parsing
     - [ ] Implement `main` function with basic command and flags
     - [ ] Verify coverage > 80%
