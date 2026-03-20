@@ -16,9 +16,11 @@ def cli():
 @click.option('--date-start', help='Filter by sales date (YYYY-MM-DD) - Start.')
 @click.option('--date-end', help='Filter by sales date (YYYY-MM-DD) - End.')
 @click.option('--district', help='Filter by assessor neighborhood district number.')
+@click.option('--limit', type=int, default=100, help='Limit the number of results (default: 100).')
+@click.option('--offset', type=int, default=0, help='Offset the results (default: 0).')
 @click.option('--format', type=click.Choice(['json', 'table'], case_sensitive=False), default='json', help='Output format (default: json).')
 @click.option('--verify/--no-verify', default=True, help='Verify SSL certificates.')
-def query(bedrooms, bathrooms, area_min, area_max, date_start, date_end, district, format, verify):
+def query(bedrooms, bathrooms, area_min, area_max, date_start, date_end, district, limit, offset, format, verify):
     """Execute a specialized property query against the SF Data API."""
     params = {}
     if bedrooms: params['bedrooms'] = bedrooms
@@ -35,6 +37,8 @@ def query(bedrooms, bathrooms, area_min, area_max, date_start, date_end, distric
     soql_query = f"SELECT {select_clause}"
     if where_clause:
         soql_query += f" WHERE {where_clause}"
+    
+    soql_query += f" LIMIT {limit} OFFSET {offset}"
     
     click.echo(f"Executing SoQL: {soql_query}")
     
