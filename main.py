@@ -10,7 +10,9 @@ def cli():
 @click.option('--base-url', default='https://api.example.com', help='Base URL of the REST API.')
 @click.option('--endpoint', default='endpoint', help='API endpoint to query.')
 @click.option('--param', multiple=True, help='Query parameters in key=value format.')
-def query(base_url, endpoint, param):
+@click.option('--auth-token', help='Bearer token for authentication.')
+@click.option('--api-key', help='API Key for authentication (X-API-Key).')
+def query(base_url, endpoint, param, auth_token, api_key):
     """Execute a query with multiple arguments."""
     query_params = {}
     for p in param:
@@ -19,11 +21,17 @@ def query(base_url, endpoint, param):
         key, value = p.split('=', 1)
         query_params[key] = value
     
+    headers = {}
+    if auth_token:
+        headers['Authorization'] = f"Bearer {auth_token}"
+    if api_key:
+        headers['X-API-Key'] = api_key
+    
     click.echo(f"Querying {base_url}/{endpoint} with arguments: {query_params}")
     
     client = APIClient(base_url)
     try:
-        response = client.get(endpoint, params=query_params)
+        response = client.get(endpoint, params=query_params, headers=headers)
         click.echo(f"API Response [{response.status_code}]: {response.text}")
     except Exception as e:
         raise click.ClickException(f"API Request failed: {str(e)}")

@@ -30,11 +30,13 @@ def test_api_get_request_with_params():
         assert m.called
         assert m.request_history[0].url == 'https://api.example.com/search?q=query'
 
-def test_api_get_request_error():
+def test_api_get_request_with_auth():
     with requests_mock.Mocker() as m:
-        m.get('https://api.example.com/error', status_code=404)
+        m.get('https://api.example.com/auth', json={'authenticated': True}, status_code=200)
         
+        headers = {'Authorization': 'Bearer test_token'}
         client = APIClient(base_url='https://api.example.com')
-        response = client.get('/error')
+        response = client.get('/auth', headers=headers)
         
-        assert response.status_code == 404
+        assert response.status_code == 200
+        assert m.request_history[0].headers['Authorization'] == 'Bearer test_token'
