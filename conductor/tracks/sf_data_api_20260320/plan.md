@@ -14,9 +14,9 @@
 - [x] Task: Implement SoQL `WHERE` Clause - Numeric Filters [f6044ff]
     - [x] Test `build_where_clause` correctly formats bedrooms/bathrooms (e.g., `number_of_bedrooms IN ("2.0")`) [f6044ff]
     - [x] Implement logic for `--bedrooms` and `--bathrooms` [f6044ff]
-- [ ] Task: Implement SoQL `WHERE` Clause - Range Filters
-    - [ ] Test `build_where_clause` correctly formats area ranges (e.g., `property_area BETWEEN 500 AND 1000`)
-    - [ ] Implement logic for `--area-min` and `--area-max`
+- [x] Task: Implement SoQL `WHERE` Clause - Range Filters [9c93715]
+    - [x] Test `build_where_clause` correctly formats area ranges (e.g., `property_area BETWEEN 500 AND 1000`) [9c93715]
+    - [x] Implement logic for `--area-min` and `--area-max` [9c93715]
 - [ ] Task: Implement SoQL `WHERE` Clause - Date Filters
     - [ ] Test `build_where_clause` correctly formats dates with `floating_timestamp` cast
     - [ ] Implement logic for `--date-start` and `--date-end`
