@@ -1,39 +1,49 @@
 import click
 from api_client import APIClient
 from formatter import format_json
+from query_builder import build_select_clause, build_where_clause
 
 @click.group()
 def cli():
-    """A CLI app that executes a rest api which performs a query with multiple arguments."""
+    """SF Property Data CLI - Query the San Francisco Data API."""
     pass
 
 @cli.command()
-@click.option('--base-url', default='https://api.example.com', help='Base URL of the REST API.')
-@click.option('--endpoint', default='endpoint', help='API endpoint to query.')
-@click.option('--param', multiple=True, help='Query parameters in key=value format.')
-@click.option('--auth-token', help='Bearer token for authentication.')
-@click.option('--api-key', help='API Key for authentication (X-API-Key).')
+@click.option('--bedrooms', help='Filter by number of bedrooms (e.g., 0, 1, 2).')
+@click.option('--bathrooms', help='Filter by number of bathrooms (e.g., 1, 1.5, 2).')
+@click.option('--area-min', help='Minimum property area in square feet.')
+@click.option('--area-max', help='Maximum property area in square feet.')
+@click.option('--date-start', help='Filter by sales date (YYYY-MM-DD) - Start.')
+@click.option('--date-end', help='Filter by sales date (YYYY-MM-DD) - End.')
+@click.option('--district', help='Filter by assessor neighborhood district number.')
 @click.option('--verify/--no-verify', default=True, help='Verify SSL certificates.')
-def query(base_url, endpoint, param, auth_token, api_key, verify):
-    """Execute a query with multiple arguments."""
-    query_params = {}
-    for p in param:
-        if '=' not in p:
-            raise click.ClickException(f"Invalid parameter format: '{p}'. Use key=value.")
-        key, value = p.split('=', 1)
-        query_params[key] = value
+def query(bedrooms, bathrooms, area_min, area_max, date_start, date_end, district, verify):
+    """Execute a specialized property query against the SF Data API."""
+    params = {}
+    if bedrooms: params['bedrooms'] = bedrooms
+    if bathrooms: params['bathrooms'] = bathrooms
+    if area_min: params['area_min'] = area_min
+    if area_max: params['area_max'] = area_max
+    if date_start: params['date_start'] = date_start
+    if date_end: params['date_end'] = date_end
+    if district: params['district'] = district
+
+    select_clause = build_select_clause()
+    where_clause = build_where_clause(params)
     
-    headers = {}
-    if auth_token:
-        headers['Authorization'] = f"Bearer {auth_token}"
-    if api_key:
-        headers['X-API-Key'] = api_key
+    soql_query = f"SELECT {select_clause}"
+    if where_clause:
+        soql_query += f" WHERE {where_clause}"
     
-    click.echo(f"Querying {base_url}/{endpoint} with arguments: {query_params}")
+    click.echo(f"Executing SoQL: {soql_query}")
     
-    client = APIClient(base_url, verify=verify)
+    # APIClient defaults to https://data.sfgov.org
+    client = APIClient(verify=verify)
+    endpoint = "/resource/wv5m-vpq2.json"
+    
     try:
-        response = client.get(endpoint, params=query_params, headers=headers)
+        # Pass the SoQL query as the '$query' parameter
+        response = client.get(endpoint, params={'$query': soql_query})
         formatted_output = format_json(response.text)
         click.echo(f"API Response [{response.status_code}]:\n{formatted_output}")
     except Exception as e:
