@@ -7,10 +7,10 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: API Client Configuration' (Protocol in workflow.md) [c22fe52]
 
 ## Phase 2: SoQL Query Builder Logic
-- [ ] Task: Implement SoQL `SELECT` Clause Generation
-    - [ ] Create `tests/test_query_builder.py`
-    - [ ] Test `build_select_clause` returns the full list of required fields (e.g., `closed_roll_year`, `property_location`, etc.)
-    - [ ] Implement `build_select_clause` function
+- [x] Task: Implement SoQL `SELECT` Clause Generation [e07084c]
+    - [x] Create `tests/test_query_builder.py` [e07084c]
+    - [x] Test `build_select_clause` returns the full list of required fields (e.g., `closed_roll_year`, `property_location`, etc.) [e07084c]
+    - [x] Implement `build_select_clause` function [e07084c]
 - [ ] Task: Implement SoQL `WHERE` Clause - Numeric Filters
     - [ ] Test `build_where_clause` correctly formats bedrooms/bathrooms (e.g., `number_of_bedrooms IN ("2.0")`)
     - [ ] Implement logic for `--bedrooms` and `--bathrooms`
