@@ -17,9 +17,9 @@
 - [x] Task: Implement SoQL `WHERE` Clause - Range Filters [9c93715]
     - [x] Test `build_where_clause` correctly formats area ranges (e.g., `property_area BETWEEN 500 AND 1000`) [9c93715]
     - [x] Implement logic for `--area-min` and `--area-max` [9c93715]
-- [ ] Task: Implement SoQL `WHERE` Clause - Date Filters
-    - [ ] Test `build_where_clause` correctly formats dates with `floating_timestamp` cast
-    - [ ] Implement logic for `--date-start` and `--date-end`
+- [x] Task: Implement SoQL `WHERE` Clause - Date Filters [8e39d64]
+    - [x] Test `build_where_clause` correctly formats dates with `floating_timestamp` cast [8e39d64]
+    - [x] Implement logic for `--date-start` and `--date-end` [8e39d64]
 - [ ] Task: Implement SoQL `WHERE` Clause - District Filter
     - [ ] Test `build_where_clause` correctly formats district (e.g., `caseless_one_of(assessor_neighborhood_district, "9")`)
     - [ ] Implement logic for `--district`
