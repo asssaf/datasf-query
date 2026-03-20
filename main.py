@@ -20,7 +20,8 @@ def cli():
 @click.option('--offset', type=int, default=0, help='Offset the results (default: 0).')
 @click.option('--format', type=click.Choice(['json', 'table'], case_sensitive=False), default='json', help='Output format (default: json).')
 @click.option('--verify/--no-verify', default=True, help='Verify SSL certificates.')
-def query(bedrooms, bathrooms, area_min, area_max, date_start, date_end, district, limit, offset, format, verify):
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose output.')
+def query(bedrooms, bathrooms, area_min, area_max, date_start, date_end, district, limit, offset, format, verify, verbose):
     """Execute a specialized property query against the SF Data API."""
     params = {}
     if bedrooms: params['bedrooms'] = bedrooms
@@ -40,7 +41,8 @@ def query(bedrooms, bathrooms, area_min, area_max, date_start, date_end, distric
     
     soql_query += f" LIMIT {limit} OFFSET {offset}"
     
-    click.echo(f"Executing SoQL: {soql_query}")
+    if verbose:
+        click.echo(f"Executing SoQL: {soql_query}", err=True)
     
     # APIClient defaults to https://data.sfgov.org
     client = APIClient(verify=verify)
@@ -55,7 +57,9 @@ def query(bedrooms, bathrooms, area_min, area_max, date_start, date_end, distric
         else:
             formatted_output = format_json(response.text)
             
-        click.echo(f"API Response [{response.status_code}]:\n{formatted_output}")
+        if verbose:
+            click.echo(f"API Response [{response.status_code}]:", err=True)
+        click.echo(formatted_output)
     except Exception as e:
         raise click.ClickException(f"API Request failed: {str(e)}")
 

@@ -40,7 +40,8 @@ def test_cli_query_sf_data():
             'query', 
             '--bedrooms', '2', 
             '--area-min', '500', 
-            '--district', '9'
+            '--district', '9',
+            '--verbose'
         ])
         
         assert result.exit_code == 0
