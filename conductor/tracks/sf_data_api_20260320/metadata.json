@@ -1,0 +1,8 @@
+{
+  "track_id": "sf_data_api_20260320",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-03-20T12:00:00Z",
+  "updated_at": "2026-03-20T12:00:00Z",
+  "description": "Modify the existing CLI app to work for the SF Data API (Socrata) for property data."
+}
