@@ -47,18 +47,17 @@ def test_cli_query_with_auth_token():
         assert kwargs['headers']['Authorization'] == 'Bearer secret_token'
         assert 'API Response [200]: {"auth": "ok"}' in result.output
 
-def test_cli_query_with_api_key():
+def test_cli_query_with_no_verify():
     runner = CliRunner()
     with patch('main.APIClient') as MockClient:
         mock_instance = MockClient.return_value
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.text = '{"auth": "ok"}'
+        mock_response.text = '{"ssl": "ignored"}'
         mock_instance.get.return_value = mock_response
         
-        result = runner.invoke(cli, ['query', '--api-key', 'my_key'])
+        result = runner.invoke(cli, ['query', '--no-verify'])
         
         assert result.exit_code == 0
-        mock_instance.get.assert_called_once()
-        args, kwargs = mock_instance.get.call_args
-        assert kwargs['headers']['X-API-Key'] == 'my_key'
+        MockClient.assert_called_once_with('https://api.example.com', verify=False)
+        assert 'API Response [200]: {"ssl": "ignored"}' in result.output

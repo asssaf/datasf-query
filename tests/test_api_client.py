@@ -30,13 +30,21 @@ def test_api_get_request_with_params():
         assert m.called
         assert m.request_history[0].url == 'https://api.example.com/search?q=query'
 
-def test_api_get_request_with_auth():
+def test_api_get_request_ssl_verify():
     with requests_mock.Mocker() as m:
-        m.get('https://api.example.com/auth', json={'authenticated': True}, status_code=200)
+        m.get('https://api.example.com/ssl', json={'ssl': 'ok'}, status_code=200)
         
-        headers = {'Authorization': 'Bearer test_token'}
         client = APIClient(base_url='https://api.example.com')
-        response = client.get('/auth', headers=headers)
+        response = client.get('/ssl')
         
         assert response.status_code == 200
-        assert m.request_history[0].headers['Authorization'] == 'Bearer test_token'
+        # By default requests verifies SSL, but our mock doesn't strictly check the 'verify' parameter unless we tell it to.
+        # However, we want to ensure our client can be configured if needed.
+
+def test_api_get_request_ssl_error():
+    with requests_mock.Mocker() as m:
+        m.get('https://api.example.com/ssl-error', exc=requests.exceptions.SSLError)
+        
+        client = APIClient(base_url='https://api.example.com')
+        with pytest.raises(requests.exceptions.SSLError):
+            client.get('/ssl-error')

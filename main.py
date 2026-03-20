@@ -12,7 +12,8 @@ def cli():
 @click.option('--param', multiple=True, help='Query parameters in key=value format.')
 @click.option('--auth-token', help='Bearer token for authentication.')
 @click.option('--api-key', help='API Key for authentication (X-API-Key).')
-def query(base_url, endpoint, param, auth_token, api_key):
+@click.option('--verify/--no-verify', default=True, help='Verify SSL certificates.')
+def query(base_url, endpoint, param, auth_token, api_key, verify):
     """Execute a query with multiple arguments."""
     query_params = {}
     for p in param:
@@ -29,7 +30,7 @@ def query(base_url, endpoint, param, auth_token, api_key):
     
     click.echo(f"Querying {base_url}/{endpoint} with arguments: {query_params}")
     
-    client = APIClient(base_url)
+    client = APIClient(base_url, verify=verify)
     try:
         response = client.get(endpoint, params=query_params, headers=headers)
         click.echo(f"API Response [{response.status_code}]: {response.text}")
