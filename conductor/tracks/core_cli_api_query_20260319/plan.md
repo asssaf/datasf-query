@@ -10,7 +10,7 @@
     - [ ] Verify coverage > 80%
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Project Setup and Core CLI Structure' (Protocol in workflow.md) [3a552ac]
 
-## Phase 2: API Interaction and Dynamic Parameters
+## Phase 2: API Interaction and Dynamic Parameters [checkpoint: d6df2dd]
 - [x] Task: Implement core API request logic [e620c35]
     - [ ] Write tests for basic GET request execution
     - [ ] Implement `api_client` module using `requests`
@@ -19,14 +19,15 @@
     - [ ] Write tests for mapping multiple flags to query parameters
     - [ ] Implement logic to collect flags and pass them to the API request
     - [ ] Verify coverage > 80%
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: API Interaction and Dynamic Parameters' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: API Interaction and Dynamic Parameters' (Protocol in workflow.md) [d6df2dd]
 
 ## Phase 3: Authentication and Secure Communication
-- [ ] Task: Implement API authentication
+- [x] Task: Implement API authentication [6765524]
+
     - [ ] Write tests for passing authentication headers (Bearer/API Key)
     - [ ] Implement authentication flag and header injection logic
     - [ ] Verify coverage > 80%
-- [ ] Task: Ensure secure HTTPS communication
+- [x] Task: Ensure secure HTTPS communication [076553a]
     - [ ] Write tests for SSL/TLS verification and error handling
     - [ ] Implement secure request defaults
     - [ ] Verify coverage > 80%
