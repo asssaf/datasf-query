@@ -14,10 +14,11 @@ A CLI application designed for power users to execute queries against a REST API
 
 ### Key Features
 - **Multiple Query Arguments**: Support for passing various query parameters as command-line arguments to the API endpoint.
+- **Pagination Support**: Support for `--limit` and `--offset` flags to control data retrieval and manage large result sets.
 - **Formatted Output**: The application will format API responses into human-readable structures (e.g., JSON, tables).
 
 ### Functional Goals
-- **API Execution**: Perform reliable queries against specified REST endpoints.
+- **API Execution**: Perform reliable queries against specified REST endpoints, including support for paginated queries to handle large datasets efficiently.
 - **Robust Error Handling**: Gracefully handle network failures and API errors to provide clear feedback to the user.
 
 ### Non-Functional Requirements (Constraints)
