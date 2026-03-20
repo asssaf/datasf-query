@@ -9,5 +9,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Modify the existing CLI app to work for the SF Data API (Socrata) for property data**
+- [x] **Track: Modify the existing CLI app to work for the SF Data API (Socrata) for property data**
   *Link: [./tracks/sf_data_api_20260320/](./tracks/sf_data_api_20260320/)*
