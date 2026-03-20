@@ -1,6 +1,6 @@
 # Implementation Plan - Build core CLI API query functionality with dynamic parameters and JSON output
 
-## Phase 1: Project Setup and Core CLI Structure
+## Phase 1: Project Setup and Core CLI Structure [checkpoint: 3a552ac]
 - [x] Task: Initialize Python project and directory structure [503b5dd]
     - [ ] Create `requirements.txt` with `click` and `requests`
     - [ ] Set up virtual environment and install dependencies
@@ -8,14 +8,14 @@
     - [ ] Write tests for CLI argument parsing
     - [ ] Implement `main` function with basic command and flags
     - [ ] Verify coverage > 80%
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Project Setup and Core CLI Structure' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Project Setup and Core CLI Structure' (Protocol in workflow.md) [3a552ac]
 
 ## Phase 2: API Interaction and Dynamic Parameters
-- [ ] Task: Implement core API request logic
+- [x] Task: Implement core API request logic [e620c35]
     - [ ] Write tests for basic GET request execution
     - [ ] Implement `api_client` module using `requests`
     - [ ] Verify coverage > 80%
-- [ ] Task: Implement dynamic parameter mapping
+- [x] Task: Implement dynamic parameter mapping [b9e422a]
     - [ ] Write tests for mapping multiple flags to query parameters
     - [ ] Implement logic to collect flags and pass them to the API request
     - [ ] Verify coverage > 80%
