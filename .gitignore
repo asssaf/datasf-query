@@ -1,0 +1,23 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+
+# Build artifacts
+build/
+dist/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+
+# IDE/OS files
+.DS_Store
+.idea/
+.vscode/
