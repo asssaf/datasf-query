@@ -1,11 +1,11 @@
 # Implementation Plan: Support Pagination
 
 ## Phase 1: Test & CLI Update
-- [ ] Task: Update CLI to accept `--limit` and `--offset`
-    - [ ] Write failing test in `tests/test_cli.py` to assert new CLI arguments are parsed.
-    - [ ] Modify `main.py` and `query_builder.py` to register and parse these arguments.
-    - [ ] Verify test passes.
-    - [ ] Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
+- [x] Task: Update CLI to accept `--limit` and `--offset` [5418e6e]
+    - [x] Write failing test in `tests/test_cli.py` to assert new CLI arguments are parsed.
+    - [x] Modify `main.py` and `query_builder.py` to register and parse these arguments.
+    - [x] Verify test passes.
+    - [x] Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: API Client Update
 - [ ] Task: Integrate pagination parameters into `api_client.py`
