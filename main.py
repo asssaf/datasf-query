@@ -9,6 +9,15 @@ def cli():
     """SF Property Data CLI - Query the San Francisco Data API."""
     pass
 
+def parse_multi_value_option(values):
+    """Parses multiple values from Click multiple=True option and comma-separated strings."""
+    if not values:
+        return None
+    result = []
+    for item in values:
+        result.extend([x.strip() for x in item.split(',') if x.strip()])
+    return result if result else None
+
 @cli.command()
 @click.option('--roll-year', help='Filter by closed roll year (e.g., 2021).')
 @click.option('--bedrooms', help='Filter by number of bedrooms (e.g., 0, 1, 2).')
@@ -19,13 +28,14 @@ def cli():
 @click.option('--area-max', help='Maximum property area in square feet.')
 @click.option('--date-start', help='Filter by sales date (YYYY-MM-DD) - Start.')
 @click.option('--date-end', help='Filter by sales date (YYYY-MM-DD) - End.')
-@click.option('--district', help='Filter by assessor neighborhood district number.')
+@click.option('--district', multiple=True, help='Filter by assessor neighborhood district number. Can be used multiple times or comma-separated.')
+@click.option('--property-class-code', multiple=True, help='Filter by property class code (e.g., D, E). Can be used multiple times or comma-separated.')
 @click.option('--limit', type=int, default=100, help='Limit the number of results (default: 100).')
 @click.option('--offset', type=int, default=0, help='Offset the results (default: 0).')
 @click.option('--format', type=click.Choice(['json', 'table'], case_sensitive=False), default='json', help='Output format (default: json).')
 @click.option('--verify/--no-verify', default=True, help='Verify SSL certificates.')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output.')
-def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, area_min, area_max, date_start, date_end, district, limit, offset, format, verify, verbose):
+def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, area_min, area_max, date_start, date_end, district, property_class_code, limit, offset, format, verify, verbose):
     """Execute a specialized property query against the SF Data API."""
     # APIClient defaults to https://data.sfgov.org
     client = APIClient(verify=verify)
@@ -67,7 +77,12 @@ def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, a
     if area_max: params['area_max'] = area_max
     if date_start: params['date_start'] = date_start
     if date_end: params['date_end'] = date_end
-    if district: params['district'] = district
+
+    districts = parse_multi_value_option(district)
+    if districts: params['district'] = districts
+
+    class_codes = parse_multi_value_option(property_class_code)
+    if class_codes: params['property_class_code'] = class_codes
 
     select_clause = build_select_clause(target_point=target_point)
     where_clause = build_where_clause(params)
