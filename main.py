@@ -11,7 +11,7 @@ def cli():
 @cli.command()
 @click.option('--bedrooms', help='Filter by number of bedrooms (e.g., 0, 1, 2).')
 @click.option('--bathrooms', help='Filter by number of bathrooms (e.g., 1, 1.5, 2).')
-@click.option('--parcel-number', help='Filter by parcel number (e.g., 0001/001).')
+@click.option('--parcel-number', help='Filter by parcel number (e.g., 3776182).')
 @click.option('--area-min', help='Minimum property area in square feet.')
 @click.option('--area-max', help='Maximum property area in square feet.')
 @click.option('--date-start', help='Filter by sales date (YYYY-MM-DD) - Start.')

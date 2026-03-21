@@ -41,9 +41,9 @@ def test_build_where_clause_bathrooms():
     assert 'number_of_bathrooms IN ("1.5")' in where
 
 def test_build_where_clause_parcel_number():
-    params = {'parcel_number': '0001/001'}
+    params = {'parcel_number': '3776182'}
     where = build_where_clause(params)
-    assert 'parcel_number = "0001/001"' in where
+    assert 'parcel_number = "3776182"' in where
 
 def test_build_where_clause_both_numeric():
     params = {'bedrooms': '3', 'bathrooms': '2'}
