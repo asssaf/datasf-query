@@ -55,5 +55,9 @@ def build_where_clause(params):
     if 'district' in params:
         district = params['district']
         filters.append(f'caseless_one_of(assessor_neighborhood_district, "{district}")')
+
+    if 'roll_year' in params:
+        val = params['roll_year']
+        filters.append(f'closed_roll_year = "{val}"')
         
     return " AND ".join(filters)

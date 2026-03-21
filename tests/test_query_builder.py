@@ -87,6 +87,11 @@ def test_build_where_clause_district():
     where = build_where_clause(params)
     assert 'caseless_one_of(assessor_neighborhood_district, "9")' in where
 
+def test_build_where_clause_roll_year():
+    params = {'roll_year': '2021'}
+    where = build_where_clause(params)
+    assert 'closed_roll_year = "2021"' in where
+
 def test_build_where_clause_combined():
     params = {
         'bedrooms': '2',

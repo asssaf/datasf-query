@@ -9,6 +9,7 @@ def cli():
     pass
 
 @cli.command()
+@click.option('--roll-year', help='Filter by closed roll year (e.g., 2021).')
 @click.option('--bedrooms', help='Filter by number of bedrooms (e.g., 0, 1, 2).')
 @click.option('--bathrooms', help='Filter by number of bathrooms (e.g., 1, 1.5, 2).')
 @click.option('--parcel-number', help='Filter by parcel number (e.g., 3776182).')
@@ -22,9 +23,10 @@ def cli():
 @click.option('--format', type=click.Choice(['json', 'table'], case_sensitive=False), default='json', help='Output format (default: json).')
 @click.option('--verify/--no-verify', default=True, help='Verify SSL certificates.')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output.')
-def query(bedrooms, bathrooms, parcel_number, area_min, area_max, date_start, date_end, district, limit, offset, format, verify, verbose):
+def query(roll_year, bedrooms, bathrooms, parcel_number, area_min, area_max, date_start, date_end, district, limit, offset, format, verify, verbose):
     """Execute a specialized property query against the SF Data API."""
     params = {}
+    if roll_year: params['roll_year'] = roll_year
     if bedrooms: params['bedrooms'] = bedrooms
     if bathrooms: params['bathrooms'] = bathrooms
     if parcel_number: params['parcel_number'] = parcel_number
