@@ -1,4 +1,4 @@
-def build_select_clause():
+def build_select_clause(target_point=None):
     fields = [
         "closed_roll_year",
         "property_location",
@@ -15,7 +15,15 @@ def build_select_clause():
         "the_geom",
         "number_of_rooms"
     ]
+    if target_point:
+        lon, lat = target_point
+        fields.append(f"distance_in_meters(`the_geom`, 'POINT ({lon} {lat})') AS distance_from_target")
     return ", ".join(fields)
+
+def build_order_by_clause(target_point=None):
+    if target_point:
+        return "distance_from_target"
+    return None
 
 def build_where_clause(params):
     filters = []

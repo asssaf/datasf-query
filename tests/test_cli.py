@@ -85,3 +85,77 @@ def test_cli_query_api_error():
         
         assert result.exit_code != 0
         assert 'Error: API Request failed: API Down' in result.output
+
+def test_cli_query_with_target_parcel():
+    runner = CliRunner()
+    with patch('main.APIClient') as MockClient:
+        mock_instance = MockClient.return_value
+
+        # Mock target lookup response
+        target_response = MagicMock()
+        target_response.json.return_value = [{
+            "the_geom": {
+                "type": "Point",
+                "coordinates": [-122.4, 37.7]
+            }
+        }]
+
+        # Mock main query response
+        main_response = MagicMock()
+        main_response.status_code = 200
+        main_response.text = '[{"parcel_number": "5678", "distance_from_target": "100"}]'
+
+        mock_instance.get.side_effect = [target_response, main_response]
+
+        result = runner.invoke(cli, [
+            'query',
+            '--target-parcel-number', '1234',
+            '--bedrooms', '2',
+            '--verbose'
+        ])
+
+        assert result.exit_code == 0
+        assert 'Looking up target parcel: 1234' in result.output
+        assert 'distance_in_meters(`the_geom`, \'POINT (-122.4 37.7)\') AS distance_from_target' in result.output
+        assert 'ORDER BY distance_from_target' in result.output
+        assert '5678' in result.output
+        assert '100' in result.output
+
+        # Verify two API calls were made
+        assert mock_instance.get.call_count == 2
+
+def test_cli_query_with_missing_target_parcel():
+    runner = CliRunner()
+    with patch('main.APIClient') as MockClient:
+        mock_instance = MockClient.return_value
+
+        # Mock target lookup response (empty)
+        target_response = MagicMock()
+        target_response.json.return_value = []
+        mock_instance.get.return_value = target_response
+
+        result = runner.invoke(cli, [
+            'query',
+            '--target-parcel-number', '9999'
+        ])
+
+        assert result.exit_code != 0
+        assert "Error: Target parcel '9999' not found." in result.output
+
+def test_cli_query_with_target_parcel_no_geom():
+    runner = CliRunner()
+    with patch('main.APIClient') as MockClient:
+        mock_instance = MockClient.return_value
+
+        # Mock target lookup response (missing geom)
+        target_response = MagicMock()
+        target_response.json.return_value = [{"parcel_number": "1234"}]
+        mock_instance.get.return_value = target_response
+
+        result = runner.invoke(cli, [
+            'query',
+            '--target-parcel-number', '1234'
+        ])
+
+        assert result.exit_code != 0
+        assert "Error: Target parcel '1234' has no geometry data." in result.output
