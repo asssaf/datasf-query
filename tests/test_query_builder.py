@@ -99,6 +99,21 @@ def test_build_where_clause_district():
     where = build_where_clause(params)
     assert 'caseless_one_of(assessor_neighborhood_district, "9")' in where
 
+def test_build_where_clause_districts_list():
+    params = {'district': ['9', '10']}
+    where = build_where_clause(params)
+    assert 'caseless_one_of(assessor_neighborhood_district, "9", "10")' in where
+
+def test_build_where_clause_property_class_code():
+    params = {'property_class_code': 'D'}
+    where = build_where_clause(params)
+    assert 'caseless_one_of(property_class_code, "D")' in where
+
+def test_build_where_clause_property_class_codes_list():
+    params = {'property_class_code': ['D', 'E', 'F']}
+    where = build_where_clause(params)
+    assert 'caseless_one_of(property_class_code, "D", "E", "F")' in where
+
 def test_build_where_clause_roll_year():
     params = {'roll_year': '2021'}
     where = build_where_clause(params)

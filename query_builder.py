@@ -61,8 +61,20 @@ def build_where_clause(params):
         filters.append(f"current_sales_date <= '{date_end}'::floating_timestamp")
 
     if 'district' in params:
-        district = params['district']
-        filters.append(f'caseless_one_of(assessor_neighborhood_district, "{district}")')
+        districts = params['district']
+        if isinstance(districts, list):
+            quoted_districts = ", ".join([f'"{d}"' for d in districts])
+            filters.append(f'caseless_one_of(assessor_neighborhood_district, {quoted_districts})')
+        else:
+            filters.append(f'caseless_one_of(assessor_neighborhood_district, "{districts}")')
+
+    if 'property_class_code' in params:
+        codes = params['property_class_code']
+        if isinstance(codes, list):
+            quoted_codes = ", ".join([f'"{c}"' for c in codes])
+            filters.append(f'caseless_one_of(property_class_code, {quoted_codes})')
+        else:
+            filters.append(f'caseless_one_of(property_class_code, "{codes}")')
 
     if 'roll_year' in params:
         val = params['roll_year']

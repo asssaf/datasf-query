@@ -52,6 +52,29 @@ def test_cli_query_sf_data():
         assert 'property_area >= 500' in result.output
         assert 'caseless_one_of(assessor_neighborhood_district, "9")' in result.output
         assert 'parcel_number = "3776182"' in result.output
+
+def test_cli_query_multi_value_options():
+    runner = CliRunner()
+    with patch('main.APIClient') as MockClient:
+        mock_instance = MockClient.return_value
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = '[{"parcel_number": "1234"}]'
+        mock_instance.get.return_value = mock_response
+
+        # Test multiple flags and comma-separated values
+        result = runner.invoke(cli, [
+            'query',
+            '--district', '9,10',
+            '--district', '11',
+            '--property-class-code', 'D',
+            '--property-class-code', 'E,F',
+            '--verbose'
+        ])
+
+        assert result.exit_code == 0
+        assert 'caseless_one_of(assessor_neighborhood_district, "9", "10", "11")' in result.output
+        assert 'caseless_one_of(property_class_code, "D", "E", "F")' in result.output
         
         # Verify API call
         mock_instance.get.assert_called_once()
