@@ -16,7 +16,13 @@ def test_build_select_clause():
         "property_area",
         "number_of_bedrooms",
         "number_of_bathrooms",
-        "current_sales_date"
+        "current_sales_date",
+        "property_class_code",
+        "year_property_built",
+        "assessed_improvement_value",
+        "assessed_land_value",
+        "the_geom",
+        "number_of_rooms"
     ]
     select_clause = build_select_clause()
     # SoQL SELECT is a comma separated string
