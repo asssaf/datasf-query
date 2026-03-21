@@ -21,6 +21,7 @@ def test_cli_query_help():
     assert result.exit_code == 0
     assert '--bedrooms' in result.output
     assert '--bathrooms' in result.output
+    assert '--parcel-number' in result.output
     assert '--area-min' in result.output
     assert '--area-max' in result.output
     assert '--date-start' in result.output
@@ -41,6 +42,7 @@ def test_cli_query_sf_data():
             '--bedrooms', '2', 
             '--area-min', '500', 
             '--district', '9',
+            '--parcel-number', '0001/001',
             '--verbose'
         ])
         
@@ -49,6 +51,7 @@ def test_cli_query_sf_data():
         assert 'number_of_bedrooms IN ("2.0")' in result.output
         assert 'property_area >= 500' in result.output
         assert 'caseless_one_of(assessor_neighborhood_district, "9")' in result.output
+        assert 'parcel_number = "0001/001"' in result.output
         
         # Verify API call
         mock_instance.get.assert_called_once()

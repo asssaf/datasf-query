@@ -28,6 +28,10 @@ def build_where_clause(params):
         val = float(params['bathrooms'])
         filters.append(f'number_of_bathrooms IN ("{val}")')
 
+    if 'parcel_number' in params:
+        val = params['parcel_number']
+        filters.append(f'parcel_number = "{val}"')
+
     area_min = params.get('area_min')
     area_max = params.get('area_max')
     
