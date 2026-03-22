@@ -27,6 +27,7 @@ def test_cli_query_help():
     assert '--date-start' in result.output
     assert '--date-end' in result.output
     assert '--district' in result.output
+    assert '--neighborhood-code' in result.output
 
 def test_cli_query_sf_data():
     runner = CliRunner()
@@ -67,6 +68,8 @@ def test_cli_query_multi_value_options():
             'query',
             '--district', '9,10',
             '--district', '11',
+            '--neighborhood-code', '9K,10L',
+            '--neighborhood-code', '11M',
             '--property-class-code', 'D',
             '--property-class-code', 'E,F',
             '--verbose'
@@ -74,6 +77,7 @@ def test_cli_query_multi_value_options():
 
         assert result.exit_code == 0
         assert 'caseless_one_of(assessor_neighborhood_district, "9", "10", "11")' in result.output
+        assert 'caseless_one_of(assessor_neighborhood_code, "9K", "10L", "11M")' in result.output
         assert 'caseless_one_of(property_class_code, "D", "E", "F")' in result.output
         
         # Verify API call

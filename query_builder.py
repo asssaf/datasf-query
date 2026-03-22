@@ -4,7 +4,7 @@ def get_selected_fields(target_point=None, target_area=None, target_total_assess
         "closed_roll_year",
         "property_location",
         "parcel_number",
-        "assessor_neighborhood_district",
+        "assessor_neighborhood_code",
         "property_area",
         "number_of_bedrooms",
         "number_of_bathrooms",
@@ -124,6 +124,14 @@ def build_where_clause(params):
             filters.append(f'caseless_one_of(property_class_code, {quoted_codes})')
         else:
             filters.append(f'caseless_one_of(property_class_code, "{codes}")')
+
+    if 'neighborhood_code' in params:
+        codes = params['neighborhood_code']
+        if isinstance(codes, list):
+            quoted_codes = ", ".join([f'"{c}"' for c in codes])
+            filters.append(f'caseless_one_of(assessor_neighborhood_code, {quoted_codes})')
+        else:
+            filters.append(f'caseless_one_of(assessor_neighborhood_code, "{codes}")')
 
     if 'roll_year' in params:
         val = params['roll_year']
