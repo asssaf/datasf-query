@@ -89,14 +89,15 @@ def test_cli_query_table_format():
         mock_instance = MockClient.return_value
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.text = '[{"parcel_number": "1234", "area": "500"}]'
+        mock_response.text = '[{"parcel_number": "1234", "property_area": "500"}]'
         mock_instance.get.return_value = mock_response
         
-        result = runner.invoke(cli, ['query', '--format', 'table'])
+        # We specify fields to keep the test stable and avoid the full default field set
+        result = runner.invoke(cli, ['query', '--format', 'table', '--fields', 'parcel_number,property_area'])
         
         assert result.exit_code == 0
-        assert 'parcel_number | area' in result.output
-        assert '1234          | 500' in result.output
+        assert 'parcel_number | property_area' in result.output
+        assert '1234          | 500          ' in result.output
 
 def test_cli_query_api_error():
     runner = CliRunner()

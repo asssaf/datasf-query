@@ -2,7 +2,7 @@ import click
 from api_client import APIClient
 import json
 from formatter import format_json, format_table
-from query_builder import build_select_clause, build_where_clause, build_order_by_clause
+from query_builder import get_selected_fields, build_select_clause, build_where_clause, build_order_by_clause
 
 @click.group()
 def cli():
@@ -127,6 +127,12 @@ def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, t
 
     requested_fields = parse_multi_value_option(fields)
 
+    selected_fields = get_selected_fields(
+        target_point=target_point,
+        target_area=target_area,
+        target_total_assessed_value=target_total_assessed_value,
+        requested_fields=requested_fields
+    )
     select_clause = build_select_clause(
         target_point=target_point,
         target_area=target_area,
@@ -156,7 +162,7 @@ def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, t
         response = client.get(endpoint, params={'$query': soql_query})
         
         if format.lower() == 'table':
-            formatted_output = format_table(response.text)
+            formatted_output = format_table(response.text, columns=selected_fields)
         else:
             formatted_output = format_json(response.text)
             

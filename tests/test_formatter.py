@@ -36,6 +36,44 @@ def test_format_table_valid():
     assert "1  | Alice" in output
     assert "2  | Bob  " in output
 
+def test_format_table_missing_field_in_first_row():
+    # Field 'age' is missing in the first row but present in the second
+    data = [
+        {"id": "1", "name": "Alice"},
+        {"id": "2", "name": "Bob", "age": "30"}
+    ]
+    input_text = json.dumps(data)
+    output = format_table(input_text)
+    # Even without explicit columns, it should discover 'age' from the second row
+    assert "id | name  | age" in output
+    assert "1  | Alice |    " in output
+    assert "2  | Bob   | 30 " in output
+
+def test_format_table_explicit_columns():
+    # Explicitly requested 'age' even though it's missing in all data
+    data = [
+        {"id": "1", "name": "Alice"},
+        {"id": "2", "name": "Bob"}
+    ]
+    input_text = json.dumps(data)
+    columns = ["id", "name", "age"]
+    output = format_table(input_text, columns=columns)
+    assert "id | name  | age" in output
+    assert "1  | Alice |    " in output
+    assert "2  | Bob   |    " in output
+
+def test_format_table_explicit_columns_order():
+    # User specifies columns in a specific order
+    data = [
+        {"id": "1", "name": "Alice"}
+    ]
+    input_text = json.dumps(data)
+    columns = ["name", "id"]
+    output = format_table(input_text, columns=columns)
+    # The order should match the 'columns' list
+    assert "name  | id" in output
+    assert "Alice | 1 " in output
+
 def test_format_table_not_list():
     input_text = '{"key": "value"}'
     assert format_table(input_text) == "No data found or invalid format for table."

@@ -1,4 +1,5 @@
-def build_select_clause(target_point=None, target_area=None, target_total_assessed_value=None, requested_fields=None):
+def get_selected_fields(target_point=None, target_area=None, target_total_assessed_value=None, requested_fields=None):
+    """Returns a list of field names/aliases to be included in the output."""
     default_fields = [
         "closed_roll_year",
         "property_location",
@@ -18,7 +19,15 @@ def build_select_clause(target_point=None, target_area=None, target_total_assess
     ]
 
     if requested_fields:
-        fields_to_use = requested_fields
+        fields_to_use = []
+        for f in requested_fields:
+            if f == "distance_from_target" and target_point is None:
+                continue
+            if f == "property_area_ratio" and target_area is None:
+                continue
+            if f == "total_assessed_value_ratio" and target_total_assessed_value is None:
+                continue
+            fields_to_use.append(f)
     else:
         fields_to_use = default_fields[:]
         if target_point:
@@ -28,6 +37,11 @@ def build_select_clause(target_point=None, target_area=None, target_total_assess
         if target_total_assessed_value is not None:
             fields_to_use.append("total_assessed_value_ratio")
         fields_to_use.sort()
+
+    return fields_to_use
+
+def build_select_clause(target_point=None, target_area=None, target_total_assessed_value=None, requested_fields=None):
+    fields_to_use = get_selected_fields(target_point, target_area, target_total_assessed_value, requested_fields)
 
     select_parts = []
     for field in fields_to_use:
