@@ -140,12 +140,65 @@ def test_cli_query_with_target_parcel():
         assert result.exit_code == 0
         assert 'Looking up target parcel: 1234' in result.output
         assert 'distance_in_meters(`the_geom`, \'POINT (-122.4 37.7)\') AS distance_from_target' in result.output
-        assert 'ORDER BY distance_from_target' in result.output
+        assert 'ORDER BY distance_in_meters(`the_geom`, \'POINT (-122.4 37.7)\')' in result.output
         assert '5678' in result.output
         assert '100' in result.output
 
         # Verify two API calls were made
         assert mock_instance.get.call_count == 2
+
+def test_cli_query_with_fields():
+    runner = CliRunner()
+    with patch('main.APIClient') as MockClient:
+        mock_instance = MockClient.return_value
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.text = '[{"parcel_number": "1234", "area": "500"}]'
+        mock_instance.get.return_value = mock_response
+
+        result = runner.invoke(cli, ['query', '--fields', 'parcel_number,property_area', '--verbose'])
+
+        assert result.exit_code == 0
+        assert 'SELECT parcel_number, property_area' in result.output
+
+def test_cli_query_with_target_parcel_and_custom_fields():
+    runner = CliRunner()
+    with patch('main.APIClient') as MockClient:
+        mock_instance = MockClient.return_value
+
+        # Mock target lookup
+        target_response = MagicMock()
+        target_response.json.return_value = [{"the_geom": {"type": "Point", "coordinates": [-122.4, 37.7]}}]
+
+        # Mock main query
+        main_response = MagicMock()
+        main_response.status_code = 200
+        main_response.text = '[{"parcel_number": "5678"}]'
+
+        mock_instance.get.side_effect = [target_response, main_response]
+
+        # Case 1: distance_from_target NOT in fields
+        result = runner.invoke(cli, [
+            'query',
+            '--target-parcel-number', '1234',
+            '--fields', 'parcel_number',
+            '--verbose'
+        ])
+        assert result.exit_code == 0
+        assert 'SELECT parcel_number' in result.output
+        assert 'distance_from_target' not in result.output.split('SELECT')[1].split('WHERE')[0]
+        assert 'ORDER BY distance_in_meters(`the_geom`, \'POINT (-122.4 37.7)\')' in result.output
+
+        # Case 2: distance_from_target IN fields
+        mock_instance.get.side_effect = [target_response, main_response]
+        result = runner.invoke(cli, [
+            'query',
+            '--target-parcel-number', '1234',
+            '--fields', 'parcel_number,distance_from_target',
+            '--verbose'
+        ])
+        assert result.exit_code == 0
+        assert 'SELECT parcel_number, distance_in_meters(`the_geom`, \'POINT (-122.4 37.7)\') AS distance_from_target' in result.output
 
 def test_cli_query_with_missing_target_parcel():
     runner = CliRunner()

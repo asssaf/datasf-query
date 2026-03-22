@@ -1,5 +1,5 @@
-def build_select_clause(target_point=None):
-    fields = [
+def build_select_clause(target_point=None, requested_fields=None):
+    default_fields = [
         "closed_roll_year",
         "property_location",
         "parcel_number",
@@ -15,14 +15,30 @@ def build_select_clause(target_point=None):
         "the_geom",
         "number_of_rooms"
     ]
-    if target_point:
-        lon, lat = target_point
-        fields.append(f"distance_in_meters(`the_geom`, 'POINT ({lon} {lat})') AS distance_from_target")
-    return ", ".join(fields)
+
+    if requested_fields:
+        fields_to_use = requested_fields
+    else:
+        fields_to_use = default_fields[:]
+        if target_point:
+            fields_to_use.append("distance_from_target")
+        fields_to_use.sort()
+
+    select_parts = []
+    for field in fields_to_use:
+        if field == "distance_from_target":
+            if target_point:
+                lon, lat = target_point
+                select_parts.append(f"distance_in_meters(`the_geom`, 'POINT ({lon} {lat})') AS distance_from_target")
+        else:
+            select_parts.append(field)
+
+    return ", ".join(select_parts)
 
 def build_order_by_clause(target_point=None):
     if target_point:
-        return "distance_from_target"
+        lon, lat = target_point
+        return f"distance_in_meters(`the_geom`, 'POINT ({lon} {lat})')"
     return None
 
 def build_where_clause(params):

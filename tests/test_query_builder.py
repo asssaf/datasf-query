@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from query_builder import build_select_clause, build_where_clause, build_order_by_clause
 
 def test_build_select_clause():
-    expected_fields = [
+    expected_fields = sorted([
         "closed_roll_year",
         "property_location",
         "parcel_number",
@@ -23,23 +23,59 @@ def test_build_select_clause():
         "assessed_land_value",
         "the_geom",
         "number_of_rooms"
-    ]
+    ])
     select_clause = build_select_clause()
     # SoQL SELECT is a comma separated string
     fields = [f.strip() for f in select_clause.split(',')]
-    assert set(fields) == set(expected_fields)
+    assert fields == expected_fields
 
 def test_build_select_clause_with_target():
     target_point = (-122.4194, 37.7749)
     select_clause = build_select_clause(target_point=target_point)
-    assert "distance_in_meters(`the_geom`, 'POINT (-122.4194 37.7749)') AS distance_from_target" in select_clause
+
+    expected_fields = [
+        "assessed_improvement_value",
+        "assessed_land_value",
+        "assessor_neighborhood_district",
+        "closed_roll_year",
+        "current_sales_date",
+        "distance_in_meters(`the_geom`, 'POINT (-122.4194 37.7749)') AS distance_from_target",
+        "number_of_bathrooms",
+        "number_of_bedrooms",
+        "number_of_rooms",
+        "parcel_number",
+        "property_area",
+        "property_class_code",
+        "property_location",
+        "the_geom",
+        "year_property_built"
+    ]
+    expected_clause = ", ".join(expected_fields)
+    assert select_clause == expected_clause
+
+def test_build_select_clause_custom_fields():
+    requested = ["parcel_number", "property_area"]
+    select_clause = build_select_clause(requested_fields=requested)
+    assert select_clause == "parcel_number, property_area"
+
+def test_build_select_clause_custom_fields_with_distance():
+    target_point = (-122.4194, 37.7749)
+    requested = ["distance_from_target", "parcel_number"]
+    select_clause = build_select_clause(target_point=target_point, requested_fields=requested)
+    assert select_clause == "distance_in_meters(`the_geom`, 'POINT (-122.4194 37.7749)') AS distance_from_target, parcel_number"
+
+def test_build_select_clause_distance_requested_but_no_target():
+    requested = ["distance_from_target", "parcel_number"]
+    select_clause = build_select_clause(requested_fields=requested)
+    # distance_from_target should be omitted if target_point is None
+    assert select_clause == "parcel_number"
 
 def test_build_order_by_clause_none():
     assert build_order_by_clause() is None
 
 def test_build_order_by_clause_with_target():
     target_point = (-122.4194, 37.7749)
-    assert build_order_by_clause(target_point=target_point) == "distance_from_target"
+    assert build_order_by_clause(target_point=target_point) == "distance_in_meters(`the_geom`, 'POINT (-122.4194 37.7749)')"
 
 def test_build_where_clause_bedrooms():
     # According to spec, bedrooms 0 should generate 'number_of_bedrooms IN ("0.0")'
