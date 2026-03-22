@@ -8,32 +8,34 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from query_builder import build_select_clause, build_where_clause, build_order_by_clause
 
 def test_build_select_clause():
-    expected_fields = sorted([
-        "closed_roll_year",
-        "property_location",
-        "parcel_number",
-        "assessor_neighborhood_district",
-        "property_area",
-        "number_of_bedrooms",
-        "number_of_bathrooms",
-        "current_sales_date",
-        "property_class_code",
-        "year_property_built",
+    # Fields are sorted by their original name before mapping to expressions
+    expected_parts = [
         "assessed_improvement_value",
         "assessed_land_value",
+        "assessor_neighborhood_district",
+        "closed_roll_year",
+        "current_sales_date",
+        "number_of_bathrooms",
+        "number_of_bedrooms",
+        "number_of_rooms",
+        "parcel_number",
+        "property_area",
+        "property_class_code",
+        "property_location",
         "the_geom",
-        "number_of_rooms"
-    ])
+        "coalesce(assessed_improvement_value, 0) + coalesce(assessed_land_value, 0) + coalesce(assessed_fixtures_value, 0) AS total_assessed_value",
+        "year_property_built"
+    ]
+    expected_clause = ", ".join(expected_parts)
     select_clause = build_select_clause()
-    # SoQL SELECT is a comma separated string
-    fields = [f.strip() for f in select_clause.split(',')]
-    assert fields == expected_fields
+    assert select_clause == expected_clause
 
 def test_build_select_clause_with_target():
     target_point = (-122.4194, 37.7749)
     select_clause = build_select_clause(target_point=target_point)
 
-    expected_fields = [
+    # distance_from_target starts with 'd', so it should be after current_sales_date
+    expected_parts = [
         "assessed_improvement_value",
         "assessed_land_value",
         "assessor_neighborhood_district",
@@ -48,9 +50,10 @@ def test_build_select_clause_with_target():
         "property_class_code",
         "property_location",
         "the_geom",
+        "coalesce(assessed_improvement_value, 0) + coalesce(assessed_land_value, 0) + coalesce(assessed_fixtures_value, 0) AS total_assessed_value",
         "year_property_built"
     ]
-    expected_clause = ", ".join(expected_fields)
+    expected_clause = ", ".join(expected_parts)
     assert select_clause == expected_clause
 
 def test_build_select_clause_custom_fields():
@@ -69,6 +72,13 @@ def test_build_select_clause_distance_requested_but_no_target():
     select_clause = build_select_clause(requested_fields=requested)
     # distance_from_target should be omitted if target_point is None
     assert select_clause == "parcel_number"
+
+def test_build_select_clause_total_assessed_value_requested():
+    # When requested_fields is provided, order should be preserved
+    requested = ["total_assessed_value", "parcel_number"]
+    select_clause = build_select_clause(requested_fields=requested)
+    expected = "coalesce(assessed_improvement_value, 0) + coalesce(assessed_land_value, 0) + coalesce(assessed_fixtures_value, 0) AS total_assessed_value, parcel_number"
+    assert select_clause == expected
 
 def test_build_order_by_clause_none():
     assert build_order_by_clause() is None
