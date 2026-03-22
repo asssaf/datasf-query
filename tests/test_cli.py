@@ -120,32 +120,47 @@ def test_cli_query_with_target_parcel():
             "the_geom": {
                 "type": "Point",
                 "coordinates": [-122.4, 37.7]
-            }
+            },
+            "property_area": "1000",
+            "assessed_improvement_value": "300000",
+            "assessed_land_value": "200000"
         }]
 
         # Mock main query response
         main_response = MagicMock()
         main_response.status_code = 200
-        main_response.text = '[{"parcel_number": "5678", "distance_from_target": "100"}]'
+        main_response.text = '[{"parcel_number": "5678", "distance_from_target": "100", "property_area_ratio": "1.5"}]'
 
         mock_instance.get.side_effect = [target_response, main_response]
 
         result = runner.invoke(cli, [
             'query',
             '--target-parcel-number', '1234',
+            '--target-roll-year', '2021',
             '--bedrooms', '2',
             '--verbose'
         ])
 
         assert result.exit_code == 0
         assert 'Looking up target parcel: 1234' in result.output
+        assert 'closed_roll_year = "2021"' in result.output
         assert 'distance_in_meters(`the_geom`, \'POINT (-122.4 37.7)\') AS distance_from_target' in result.output
-        assert 'ORDER BY distance_in_meters(`the_geom`, \'POINT (-122.4 37.7)\')' in result.output
+        assert 'property_area / 1000.0 AS property_area_ratio' in result.output
+        assert 'ORDER BY distance_in_meters(`the_geom`, \'POINT (-122.4 37.7)\'), property_area / 1000.0' in result.output
         assert '5678' in result.output
-        assert '100' in result.output
+        assert '1.5' in result.output
 
         # Verify two API calls were made
         assert mock_instance.get.call_count == 2
+
+def test_cli_query_target_without_roll_year():
+    runner = CliRunner()
+    result = runner.invoke(cli, [
+        'query',
+        '--target-parcel-number', '1234'
+    ])
+    assert result.exit_code != 0
+    assert "When --target-parcel-number is provided, --target-roll-year must also be specified." in result.output
 
 def test_cli_query_with_fields():
     runner = CliRunner()
@@ -181,6 +196,7 @@ def test_cli_query_with_target_parcel_and_custom_fields():
         result = runner.invoke(cli, [
             'query',
             '--target-parcel-number', '1234',
+            '--target-roll-year', '2021',
             '--fields', 'parcel_number',
             '--verbose'
         ])
@@ -194,6 +210,7 @@ def test_cli_query_with_target_parcel_and_custom_fields():
         result = runner.invoke(cli, [
             'query',
             '--target-parcel-number', '1234',
+            '--target-roll-year', '2021',
             '--fields', 'parcel_number,distance_from_target',
             '--verbose'
         ])
@@ -212,7 +229,8 @@ def test_cli_query_with_missing_target_parcel():
 
         result = runner.invoke(cli, [
             'query',
-            '--target-parcel-number', '9999'
+            '--target-parcel-number', '9999',
+            '--target-roll-year', '2021'
         ])
 
         assert result.exit_code != 0
@@ -230,7 +248,8 @@ def test_cli_query_with_target_parcel_no_geom():
 
         result = runner.invoke(cli, [
             'query',
-            '--target-parcel-number', '1234'
+            '--target-parcel-number', '1234',
+            '--target-roll-year', '2021'
         ])
 
         assert result.exit_code != 0

@@ -24,6 +24,7 @@ def parse_multi_value_option(values):
 @click.option('--bathrooms', help='Filter by number of bathrooms (e.g., 1, 1.5, 2).')
 @click.option('--parcel-number', help='Filter by parcel number (e.g., 3776182).')
 @click.option('--target-parcel-number', help='Compare results to this parcel number.')
+@click.option('--target-roll-year', help='Closed roll year for the target parcel.')
 @click.option('--area-min', help='Minimum property area in square feet.')
 @click.option('--area-max', help='Maximum property area in square feet.')
 @click.option('--date-start', help='Filter by sales date (YYYY-MM-DD) - Start.')
@@ -36,18 +37,29 @@ def parse_multi_value_option(values):
 @click.option('--format', type=click.Choice(['json', 'table'], case_sensitive=False), default='json', help='Output format (default: json).')
 @click.option('--verify/--no-verify', default=True, help='Verify SSL certificates.')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output.')
-def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, area_min, area_max, date_start, date_end, district, property_class_code, fields, limit, offset, format, verify, verbose):
+def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, target_roll_year, area_min, area_max, date_start, date_end, district, property_class_code, fields, limit, offset, format, verify, verbose):
     """Execute a specialized property query against the SF Data API."""
     # APIClient defaults to https://data.sfgov.org
     client = APIClient(verify=verify)
     endpoint = "/resource/wv5m-vpq2.json"
 
     target_point = None
+    target_area = None
+    target_total_assessed_value = None
+
     if target_parcel_number:
+        if not target_roll_year:
+            raise click.ClickException("When --target-parcel-number is provided, --target-roll-year must also be specified.")
+
         # Step 1: Lookup target parcel
-        lookup_params = {'parcel_number': target_parcel_number}
+        lookup_params = {
+            'parcel_number': target_parcel_number,
+            'roll_year': target_roll_year
+        }
         lookup_where = build_where_clause(lookup_params)
-        lookup_query = f"SELECT the_geom WHERE {lookup_where} LIMIT 1"
+        # Fetch fields needed for relative calculations
+        lookup_fields = "the_geom, property_area, assessed_improvement_value, assessed_land_value, assessed_fixtures_value"
+        lookup_query = f"SELECT {lookup_fields} WHERE {lookup_where} LIMIT 1"
 
         if verbose:
             click.echo(f"Looking up target parcel: {target_parcel_number}", err=True)
@@ -59,11 +71,39 @@ def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, a
             if not data:
                 raise click.ClickException(f"Target parcel '{target_parcel_number}' not found.")
 
-            the_geom = data[0].get('the_geom')
+            target_data = data[0]
+            the_geom = target_data.get('the_geom')
             if not the_geom or 'coordinates' not in the_geom:
                 raise click.ClickException(f"Target parcel '{target_parcel_number}' has no geometry data.")
 
             target_point = the_geom['coordinates'] # [lon, lat]
+
+            # Get property area
+            try:
+                area_val = target_data.get('property_area')
+                target_area = float(area_val) if area_val is not None else None
+                # If area is 0, we treat it as None to avoid division by zero
+                if target_area == 0:
+                    target_area = None
+            except (ValueError, TypeError):
+                target_area = None
+
+            # Calculate total assessed value for target
+            def to_float(val):
+                try:
+                    return float(val) if val is not None else 0.0
+                except (ValueError, TypeError):
+                    return 0.0
+
+            improvement = to_float(target_data.get('assessed_improvement_value'))
+            land = to_float(target_data.get('assessed_land_value'))
+            fixtures = to_float(target_data.get('assessed_fixtures_value'))
+            target_total_assessed_value = improvement + land + fixtures
+
+            # If total is 0, we treat it as None to avoid division by zero and return null as per requirement
+            if target_total_assessed_value == 0:
+                target_total_assessed_value = None
+
         except Exception as e:
             if isinstance(e, click.ClickException):
                 raise e
@@ -87,9 +127,17 @@ def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, a
 
     requested_fields = parse_multi_value_option(fields)
 
-    select_clause = build_select_clause(target_point=target_point, requested_fields=requested_fields)
+    select_clause = build_select_clause(
+        target_point=target_point,
+        target_area=target_area,
+        target_total_assessed_value=target_total_assessed_value,
+        requested_fields=requested_fields
+    )
     where_clause = build_where_clause(params)
-    order_by_clause = build_order_by_clause(target_point=target_point)
+    order_by_clause = build_order_by_clause(
+        target_point=target_point,
+        target_area=target_area
+    )
     
     soql_query = f"SELECT {select_clause}"
     if where_clause:
