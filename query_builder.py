@@ -13,7 +13,8 @@ def build_select_clause(target_point=None, requested_fields=None):
         "assessed_improvement_value",
         "assessed_land_value",
         "the_geom",
-        "number_of_rooms"
+        "number_of_rooms",
+        "total_assessed_value"
     ]
 
     if requested_fields:
@@ -30,6 +31,8 @@ def build_select_clause(target_point=None, requested_fields=None):
             if target_point:
                 lon, lat = target_point
                 select_parts.append(f"distance_in_meters(`the_geom`, 'POINT ({lon} {lat})') AS distance_from_target")
+        elif field == "total_assessed_value":
+            select_parts.append("coalesce(assessed_improvement_value, 0) + coalesce(assessed_land_value, 0) + coalesce(assessed_fixtures_value, 0) AS total_assessed_value")
         else:
             select_parts.append(field)
 
