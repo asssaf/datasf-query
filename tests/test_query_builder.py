@@ -12,7 +12,7 @@ def test_build_select_clause():
     expected_parts = [
         "assessed_improvement_value",
         "assessed_land_value",
-        "assessor_neighborhood_district",
+        "assessor_neighborhood_code",
         "closed_roll_year",
         "current_sales_date",
         "number_of_bathrooms",
@@ -46,7 +46,7 @@ def test_build_select_clause_with_target():
     expected_parts = [
         "assessed_improvement_value",
         "assessed_land_value",
-        "assessor_neighborhood_district",
+        "assessor_neighborhood_code",
         "closed_roll_year",
         "current_sales_date",
         "distance_in_meters(`the_geom`, 'POINT (-122.4194 37.7749)') AS distance_from_target",
@@ -191,6 +191,16 @@ def test_build_where_clause_property_class_codes_list():
     params = {'property_class_code': ['D', 'E', 'F']}
     where = build_where_clause(params)
     assert 'caseless_one_of(property_class_code, "D", "E", "F")' in where
+
+def test_build_where_clause_neighborhood_code():
+    params = {'neighborhood_code': '9K'}
+    where = build_where_clause(params)
+    assert 'caseless_one_of(assessor_neighborhood_code, "9K")' in where
+
+def test_build_where_clause_neighborhood_codes_list():
+    params = {'neighborhood_code': ['9K', '10L']}
+    where = build_where_clause(params)
+    assert 'caseless_one_of(assessor_neighborhood_code, "9K", "10L")' in where
 
 def test_build_where_clause_roll_year():
     params = {'roll_year': '2021'}
