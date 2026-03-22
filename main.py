@@ -43,11 +43,16 @@ def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, a
     endpoint = "/resource/wv5m-vpq2.json"
 
     target_point = None
+    target_area = None
+    target_total_assessed_value = None
+
     if target_parcel_number:
         # Step 1: Lookup target parcel
         lookup_params = {'parcel_number': target_parcel_number}
         lookup_where = build_where_clause(lookup_params)
-        lookup_query = f"SELECT the_geom WHERE {lookup_where} LIMIT 1"
+        # Fetch fields needed for relative calculations
+        lookup_fields = "the_geom, property_area, assessed_improvement_value, assessed_land_value, assessed_fixtures_value"
+        lookup_query = f"SELECT {lookup_fields} WHERE {lookup_where} LIMIT 1"
 
         if verbose:
             click.echo(f"Looking up target parcel: {target_parcel_number}", err=True)
@@ -59,11 +64,39 @@ def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, a
             if not data:
                 raise click.ClickException(f"Target parcel '{target_parcel_number}' not found.")
 
-            the_geom = data[0].get('the_geom')
+            target_data = data[0]
+            the_geom = target_data.get('the_geom')
             if not the_geom or 'coordinates' not in the_geom:
                 raise click.ClickException(f"Target parcel '{target_parcel_number}' has no geometry data.")
 
             target_point = the_geom['coordinates'] # [lon, lat]
+
+            # Get property area
+            try:
+                area_val = target_data.get('property_area')
+                target_area = float(area_val) if area_val is not None else None
+                # If area is 0, we treat it as None to avoid division by zero
+                if target_area == 0:
+                    target_area = None
+            except (ValueError, TypeError):
+                target_area = None
+
+            # Calculate total assessed value for target
+            def to_float(val):
+                try:
+                    return float(val) if val is not None else 0.0
+                except (ValueError, TypeError):
+                    return 0.0
+
+            improvement = to_float(target_data.get('assessed_improvement_value'))
+            land = to_float(target_data.get('assessed_land_value'))
+            fixtures = to_float(target_data.get('assessed_fixtures_value'))
+            target_total_assessed_value = improvement + land + fixtures
+
+            # If total is 0, we treat it as None to avoid division by zero and return null as per requirement
+            if target_total_assessed_value == 0:
+                target_total_assessed_value = None
+
         except Exception as e:
             if isinstance(e, click.ClickException):
                 raise e
@@ -87,9 +120,17 @@ def query(roll_year, bedrooms, bathrooms, parcel_number, target_parcel_number, a
 
     requested_fields = parse_multi_value_option(fields)
 
-    select_clause = build_select_clause(target_point=target_point, requested_fields=requested_fields)
+    select_clause = build_select_clause(
+        target_point=target_point,
+        target_area=target_area,
+        target_total_assessed_value=target_total_assessed_value,
+        requested_fields=requested_fields
+    )
     where_clause = build_where_clause(params)
-    order_by_clause = build_order_by_clause(target_point=target_point)
+    order_by_clause = build_order_by_clause(
+        target_point=target_point,
+        target_area=target_area
+    )
     
     soql_query = f"SELECT {select_clause}"
     if where_clause:

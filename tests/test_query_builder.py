@@ -32,9 +32,17 @@ def test_build_select_clause():
 
 def test_build_select_clause_with_target():
     target_point = (-122.4194, 37.7749)
-    select_clause = build_select_clause(target_point=target_point)
+    target_area = 1000.0
+    target_total_val = 500000.0
+    select_clause = build_select_clause(
+        target_point=target_point,
+        target_area=target_area,
+        target_total_assessed_value=target_total_val
+    )
 
-    # distance_from_target starts with 'd', so it should be after current_sales_date
+    # distance_from_target starts with 'd'
+    # property_area_ratio starts with 'p'
+    # total_assessed_value_ratio starts with 't'
     expected_parts = [
         "assessed_improvement_value",
         "assessed_land_value",
@@ -47,10 +55,12 @@ def test_build_select_clause_with_target():
         "number_of_rooms",
         "parcel_number",
         "property_area",
+        "property_area / 1000.0 AS property_area_ratio",
         "property_class_code",
         "property_location",
         "the_geom",
         "coalesce(assessed_improvement_value, 0) + coalesce(assessed_land_value, 0) + coalesce(assessed_fixtures_value, 0) AS total_assessed_value",
+        "(coalesce(assessed_improvement_value, 0) + coalesce(assessed_land_value, 0) + coalesce(assessed_fixtures_value, 0)) / 500000.0 AS total_assessed_value_ratio",
         "year_property_built"
     ]
     expected_clause = ", ".join(expected_parts)
@@ -66,6 +76,26 @@ def test_build_select_clause_custom_fields_with_distance():
     requested = ["distance_from_target", "parcel_number"]
     select_clause = build_select_clause(target_point=target_point, requested_fields=requested)
     assert select_clause == "distance_in_meters(`the_geom`, 'POINT (-122.4194 37.7749)') AS distance_from_target, parcel_number"
+
+def test_build_select_clause_custom_fields_with_ratios():
+    target_point = (-122.4194, 37.7749)
+    target_area = 1000.0
+    target_total_val = 500000.0
+    requested = ["property_area_ratio", "total_assessed_value_ratio"]
+    select_clause = build_select_clause(
+        target_point=target_point,
+        target_area=target_area,
+        target_total_assessed_value=target_total_val,
+        requested_fields=requested
+    )
+    expected = "property_area / 1000.0 AS property_area_ratio, (coalesce(assessed_improvement_value, 0) + coalesce(assessed_land_value, 0) + coalesce(assessed_fixtures_value, 0)) / 500000.0 AS total_assessed_value_ratio"
+    assert select_clause == expected
+
+def test_build_select_clause_ratios_requested_but_no_target():
+    requested = ["property_area_ratio", "total_assessed_value_ratio", "parcel_number"]
+    select_clause = build_select_clause(requested_fields=requested)
+    # Ratios should be omitted if target data is None
+    assert select_clause == "parcel_number"
 
 def test_build_select_clause_distance_requested_but_no_target():
     requested = ["distance_from_target", "parcel_number"]
@@ -85,7 +115,9 @@ def test_build_order_by_clause_none():
 
 def test_build_order_by_clause_with_target():
     target_point = (-122.4194, 37.7749)
-    assert build_order_by_clause(target_point=target_point) == "distance_in_meters(`the_geom`, 'POINT (-122.4194 37.7749)')"
+    target_area = 1000.0
+    expected = "distance_in_meters(`the_geom`, 'POINT (-122.4194 37.7749)')" + ", property_area / 1000.0"
+    assert build_order_by_clause(target_point=target_point, target_area=target_area) == expected
 
 def test_build_where_clause_bedrooms():
     # According to spec, bedrooms 0 should generate 'number_of_bedrooms IN ("0.0")'

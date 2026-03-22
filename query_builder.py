@@ -1,4 +1,4 @@
-def build_select_clause(target_point=None, requested_fields=None):
+def build_select_clause(target_point=None, target_area=None, target_total_assessed_value=None, requested_fields=None):
     default_fields = [
         "closed_roll_year",
         "property_location",
@@ -23,6 +23,10 @@ def build_select_clause(target_point=None, requested_fields=None):
         fields_to_use = default_fields[:]
         if target_point:
             fields_to_use.append("distance_from_target")
+        if target_area is not None:
+            fields_to_use.append("property_area_ratio")
+        if target_total_assessed_value is not None:
+            fields_to_use.append("total_assessed_value_ratio")
         fields_to_use.sort()
 
     select_parts = []
@@ -31,6 +35,13 @@ def build_select_clause(target_point=None, requested_fields=None):
             if target_point:
                 lon, lat = target_point
                 select_parts.append(f"distance_in_meters(`the_geom`, 'POINT ({lon} {lat})') AS distance_from_target")
+        elif field == "property_area_ratio":
+            if target_area is not None:
+                select_parts.append(f"property_area / {target_area} AS property_area_ratio")
+        elif field == "total_assessed_value_ratio":
+            if target_total_assessed_value is not None:
+                total_expr = "(coalesce(assessed_improvement_value, 0) + coalesce(assessed_land_value, 0) + coalesce(assessed_fixtures_value, 0))"
+                select_parts.append(f"{total_expr} / {target_total_assessed_value} AS total_assessed_value_ratio")
         elif field == "total_assessed_value":
             select_parts.append("coalesce(assessed_improvement_value, 0) + coalesce(assessed_land_value, 0) + coalesce(assessed_fixtures_value, 0) AS total_assessed_value")
         else:
@@ -38,11 +49,16 @@ def build_select_clause(target_point=None, requested_fields=None):
 
     return ", ".join(select_parts)
 
-def build_order_by_clause(target_point=None):
+def build_order_by_clause(target_point=None, target_area=None):
+    order_parts = []
     if target_point:
         lon, lat = target_point
-        return f"distance_in_meters(`the_geom`, 'POINT ({lon} {lat})')"
-    return None
+        order_parts.append(f"distance_in_meters(`the_geom`, 'POINT ({lon} {lat})')")
+
+    if target_area is not None:
+        order_parts.append(f"property_area / {target_area}")
+
+    return ", ".join(order_parts) if order_parts else None
 
 def build_where_clause(params):
     filters = []
