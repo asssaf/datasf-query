@@ -17,10 +17,10 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
     - name: Setup Node
-      uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c483a26c91 # v4.2.0
+      uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
       with:
         node-version: 20
 
@@ -37,7 +37,7 @@ jobs:
         elm make src/Main.elm --optimize --output=main.js
 
     - name: Setup Pages
-      uses: actions/configure-pages@11b93f6ba9cc2b18420e6a3c631024345517f8a3 # v5.0.0
+      uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dee4629d9575 # v3.0.1

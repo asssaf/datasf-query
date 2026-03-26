@@ -44,6 +44,7 @@ type alias Model =
     , targetPoint : Maybe (Float, Float)
     , targetArea : Maybe Float
     , targetTotalValue : Maybe Float
+    , fields : List String
     , lastError : Maybe String
     }
 
@@ -59,6 +60,7 @@ init _ =
       , targetPoint = Nothing
       , targetArea = Nothing
       , targetTotalValue = Nothing
+      , fields = []
       , lastError = Nothing
       }
     , Cmd.none
@@ -68,6 +70,7 @@ init _ =
 
 type Msg
     = UpdateField (QueryParams -> QueryParams)
+    | UpdateFields String
     | UpdateTargetParcel String
     | UpdateTargetRollYear String
     | UpdateLimit String
@@ -82,6 +85,9 @@ update msg model =
     case msg of
         UpdateField updater ->
             ( { model | queryParams = updater model.queryParams }, Cmd.none )
+
+        UpdateFields val ->
+            ( { model | fields = String.split "," val |> List.map String.trim |> List.filter (not << String.isEmpty) }, Cmd.none )
 
         UpdateTargetParcel val ->
             ( { model | targetParcelNumber = val }, Cmd.none )
@@ -106,7 +112,7 @@ update msg model =
                     ( { model | status = LoadingTarget }, fetchTargetParcel model.targetParcelNumber model.targetRollYear GotTargetLookup )
             else
                 ( { model | status = LoadingResults, targetPoint = Nothing, targetArea = Nothing, targetTotalValue = Nothing }
-                , fetchProperties Nothing Nothing Nothing [] model.queryParams model.limit model.offset GotResults
+                , fetchProperties Nothing Nothing Nothing model.fields model.queryParams model.limit model.offset GotResults
                 )
 
         GotTargetLookup result ->
@@ -123,7 +129,7 @@ update msg model =
                         finalTotal = if total == 0 then Nothing else Just total
                     in
                     ( { model | status = LoadingResults, targetPoint = point, targetArea = area, targetTotalValue = finalTotal }
-                    , fetchProperties point area finalTotal [] model.queryParams model.limit model.offset GotResults
+                    , fetchProperties point area finalTotal model.fields model.queryParams model.limit model.offset GotResults
                     )
                 Ok _ ->
                     ( { model | status = Failure "Target parcel not found." }, Cmd.none )
@@ -170,73 +176,79 @@ viewForm model =
             [ Html.form [ onSubmit SubmitSearch ]
                 [ div [ class "row mb-3" ]
                     [ div [ class "col-md-3" ]
-                        [ label [ class "form-label" ] [ text "Roll Year" ]
-                        , input [ class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.roll_year), onInput (\v -> UpdateField (\q -> { q | roll_year = if v == "" then Nothing else Just v })) ] []
+                        [ label [ class "form-label", for "roll-year" ] [ text "Roll Year" ]
+                        , input [ id "roll-year", class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.roll_year), onInput (\v -> UpdateField (\q -> { q | roll_year = if v == "" then Nothing else Just v })) ] []
                         ]
                     , div [ class "col-md-3" ]
-                        [ label [ class "form-label" ] [ text "Bedrooms" ]
-                        , input [ class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.bedrooms), onInput (\v -> UpdateField (\q -> { q | bedrooms = if v == "" then Nothing else Just v })) ] []
+                        [ label [ class "form-label", for "bedrooms" ] [ text "Bedrooms" ]
+                        , input [ id "bedrooms", class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.bedrooms), onInput (\v -> UpdateField (\q -> { q | bedrooms = if v == "" then Nothing else Just v })) ] []
                         ]
                     , div [ class "col-md-3" ]
-                        [ label [ class "form-label" ] [ text "Bathrooms" ]
-                        , input [ class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.bathrooms), onInput (\v -> UpdateField (\q -> { q | bathrooms = if v == "" then Nothing else Just v })) ] []
+                        [ label [ class "form-label", for "bathrooms" ] [ text "Bathrooms" ]
+                        , input [ id "bathrooms", class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.bathrooms), onInput (\v -> UpdateField (\q -> { q | bathrooms = if v == "" then Nothing else Just v })) ] []
                         ]
                     , div [ class "col-md-3" ]
-                        [ label [ class "form-label" ] [ text "Parcel Number" ]
-                        , input [ class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.parcel_number), onInput (\v -> UpdateField (\q -> { q | parcel_number = if v == "" then Nothing else Just v })) ] []
+                        [ label [ class "form-label", for "parcel-number" ] [ text "Parcel Number" ]
+                        , input [ id "parcel-number", class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.parcel_number), onInput (\v -> UpdateField (\q -> { q | parcel_number = if v == "" then Nothing else Just v })) ] []
                         ]
                     ]
                 , div [ class "row mb-3" ]
                     [ div [ class "col-md-3" ]
-                        [ label [ class "form-label" ] [ text "Area Min" ]
-                        , input [ class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.area_min), onInput (\v -> UpdateField (\q -> { q | area_min = if v == "" then Nothing else Just v })) ] []
+                        [ label [ class "form-label", for "area-min" ] [ text "Area Min" ]
+                        , input [ id "area-min", class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.area_min), onInput (\v -> UpdateField (\q -> { q | area_min = if v == "" then Nothing else Just v })) ] []
                         ]
                     , div [ class "col-md-3" ]
-                        [ label [ class "form-label" ] [ text "Area Max" ]
-                        , input [ class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.area_max), onInput (\v -> UpdateField (\q -> { q | area_max = if v == "" then Nothing else Just v })) ] []
+                        [ label [ class "form-label", for "area-max" ] [ text "Area Max" ]
+                        , input [ id "area-max", class "form-control", type_ "text", value (Maybe.withDefault "" model.queryParams.area_max), onInput (\v -> UpdateField (\q -> { q | area_max = if v == "" then Nothing else Just v })) ] []
                         ]
                     , div [ class "col-md-3" ]
-                        [ label [ class "form-label" ] [ text "Date Start" ]
-                        , input [ class "form-control", type_ "date", value (Maybe.withDefault "" model.queryParams.date_start), onInput (\v -> UpdateField (\q -> { q | date_start = if v == "" then Nothing else Just v })) ] []
+                        [ label [ class "form-label", for "date-start" ] [ text "Date Start" ]
+                        , input [ id "date-start", class "form-control", type_ "date", value (Maybe.withDefault "" model.queryParams.date_start), onInput (\v -> UpdateField (\q -> { q | date_start = if v == "" then Nothing else Just v })) ] []
                         ]
                     , div [ class "col-md-3" ]
-                        [ label [ class "form-label" ] [ text "Date End" ]
-                        , input [ class "form-control", type_ "date", value (Maybe.withDefault "" model.queryParams.date_end), onInput (\v -> UpdateField (\q -> { q | date_end = if v == "" then Nothing else Just v })) ] []
+                        [ label [ class "form-label", for "date-end" ] [ text "Date End" ]
+                        , input [ id "date-end", class "form-control", type_ "date", value (Maybe.withDefault "" model.queryParams.date_end), onInput (\v -> UpdateField (\q -> { q | date_end = if v == "" then Nothing else Just v })) ] []
                         ]
                     ]
                 , div [ class "row mb-3" ]
                     [ div [ class "col-md-4" ]
-                        [ label [ class "form-label" ] [ text "Districts (comma separated)" ]
-                        , input [ class "form-control", type_ "text", onInput (\v -> UpdateField (\q -> { q | districts = String.split "," v |> List.map String.trim |> List.filter (not << String.isEmpty) })) ] []
+                        [ label [ class "form-label", for "districts" ] [ text "Districts (comma separated)" ]
+                        , input [ id "districts", class "form-control", type_ "text", onInput (\v -> UpdateField (\q -> { q | districts = String.split "," v |> List.map String.trim |> List.filter (not << String.isEmpty) })) ] []
                         ]
                     , div [ class "col-md-4" ]
-                        [ label [ class "form-label" ] [ text "Neighborhood Codes" ]
-                        , input [ class "form-control", type_ "text", onInput (\v -> UpdateField (\q -> { q | neighborhood_codes = String.split "," v |> List.map String.trim |> List.filter (not << String.isEmpty) })) ] []
+                        [ label [ class "form-label", for "neighborhood-codes" ] [ text "Neighborhood Codes" ]
+                        , input [ id "neighborhood-codes", class "form-control", type_ "text", onInput (\v -> UpdateField (\q -> { q | neighborhood_codes = String.split "," v |> List.map String.trim |> List.filter (not << String.isEmpty) })) ] []
                         ]
                     , div [ class "col-md-4" ]
-                        [ label [ class "form-label" ] [ text "Property Class Codes" ]
-                        , input [ class "form-control", type_ "text", onInput (\v -> UpdateField (\q -> { q | property_class_codes = String.split "," v |> List.map String.trim |> List.filter (not << String.isEmpty) })) ] []
+                        [ label [ class "form-label", for "property-class-codes" ] [ text "Property Class Codes" ]
+                        , input [ id "property-class-codes", class "form-control", type_ "text", onInput (\v -> UpdateField (\q -> { q | property_class_codes = String.split "," v |> List.map String.trim |> List.filter (not << String.isEmpty) })) ] []
+                        ]
+                    ]
+                , div [ class "row mb-3" ]
+                    [ div [ class "col-md-12" ]
+                        [ label [ class "form-label", for "fields" ] [ text "Requested Fields (comma separated, leave blank for defaults)" ]
+                        , input [ id "fields", class "form-control", type_ "text", value (String.join ", " model.fields), onInput UpdateFields ] []
                         ]
                     ]
                 , h5 [ class "mt-4" ] [ text "Target Parcel Comparison" ]
                 , div [ class "row mb-3" ]
                     [ div [ class "col-md-6" ]
-                        [ label [ class "form-label" ] [ text "Target Parcel Number" ]
-                        , input [ class "form-control", type_ "text", value model.targetParcelNumber, onInput UpdateTargetParcel ] []
+                        [ label [ class "form-label", for "target-parcel" ] [ text "Target Parcel Number" ]
+                        , input [ id "target-parcel", class "form-control", type_ "text", value model.targetParcelNumber, onInput UpdateTargetParcel ] []
                         ]
                     , div [ class "col-md-6" ]
-                        [ label [ class "form-label" ] [ text "Target Roll Year" ]
-                        , input [ class "form-control", type_ "text", value model.targetRollYear, onInput UpdateTargetRollYear ] []
+                        [ label [ class "form-label", for "target-roll-year" ] [ text "Target Roll Year" ]
+                        , input [ id "target-roll-year", class "form-control", type_ "text", value model.targetRollYear, onInput UpdateTargetRollYear ] []
                         ]
                     ]
                 , div [ class "row mb-3" ]
                     [ div [ class "col-md-6" ]
-                        [ label [ class "form-label" ] [ text "Limit" ]
-                        , input [ class "form-control", type_ "number", value (String.fromInt model.limit), onInput UpdateLimit ] []
+                        [ label [ class "form-label", for "limit" ] [ text "Limit" ]
+                        , input [ id "limit", class "form-control", type_ "number", value (String.fromInt model.limit), onInput UpdateLimit ] []
                         ]
                     , div [ class "col-md-6" ]
-                        [ label [ class "form-label" ] [ text "Offset" ]
-                        , input [ class "form-control", type_ "number", value (String.fromInt model.offset), onInput UpdateOffset ] []
+                        [ label [ class "form-label", for "offset" ] [ text "Offset" ]
+                        , input [ id "offset", class "form-control", type_ "number", value (String.fromInt model.offset), onInput UpdateOffset ] []
                         ]
                     ]
                 , button [ class "btn btn-primary", type_ "submit" ] [ text "Search" ]
@@ -276,7 +288,7 @@ viewStatus model =
 viewTable : Model -> List Property -> Html Msg
 viewTable model results =
     let
-        headers = QueryBuilder.getSelectedFields model.targetPoint model.targetArea model.targetTotalValue []
+        headers = QueryBuilder.getSelectedFields model.targetPoint model.targetArea model.targetTotalValue model.fields
     in
     div [ class "table-responsive" ]
         [ table [ class "table table-striped table-hover table-sm" ]
