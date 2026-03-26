@@ -36,8 +36,18 @@ jobs:
       run: |
         elm make src/Main.elm --optimize --output=main.js
 
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: sf-property-data-app
+        path: |
+          index.html
+          main.js
+
     - name: Setup Pages
       uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      with:
+        enablement: true
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
@@ -48,3 +58,4 @@ jobs:
       if: github.ref == 'refs/heads/master'
       id: deployment
       uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+# Reverting to stable state
