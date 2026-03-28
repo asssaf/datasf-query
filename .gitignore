@@ -1,23 +1,7 @@
-# Python artifacts
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environments
-venv/
-
-# Build artifacts
-build/
+node_modules/
 dist/
-
-# Test artifacts
+.wrangler/
 .pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.pytest_cache/
-
-# IDE/OS files
-.DS_Store
-.idea/
-.vscode/
+__pycache__/
+venv/
+*.spec

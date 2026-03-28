@@ -1,0 +1,23 @@
+{
+  "name": "sf-property-data-mcp",
+  "version": "1.0.0",
+  "description": "SF Property Data MCP server for Cloudflare Workers",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "wrangler deploy --dry-run",
+    "deploy": "wrangler deploy",
+    "start": "wrangler dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.1",
+    "agents": "^0.8.7",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240529.0",
+    "typescript": "^5.4.5",
+    "wrangler": "^3.57.2"
+  }
+}
