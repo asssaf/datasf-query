@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { createMcpHandler } from "agents/mcp";
+import { McpAgent } from "agents/mcp";
 import { z } from "zod";
 import { APIClient } from "./apiClient.js";
 import {
@@ -28,100 +28,103 @@ const QuerySchema = z.object({
   offset: z.number().default(0).describe("Offset the results (default: 0)."),
 });
 
-function createServer() {
-  const server = new McpServer({
+export class SFPropertyMCP extends McpAgent {
+  server = new McpServer({
     name: "sf-property-data",
     version: "1.0.0",
   });
 
-  server.tool(
-    "query",
-    "Execute a specialized property query against the SF Data API.",
-    QuerySchema.shape,
-    async (args) => {
-      const client = new APIClient();
-      const endpoint = "/resource/wv5m-vpq2.json";
+  async init() {
+    this.server.tool(
+      "query",
+      "Execute a specialized property query against the SF Data API.",
+      QuerySchema.shape,
+      async (args) => {
+        const client = new APIClient();
+        const endpoint = "/resource/wv5m-vpq2.json";
 
-      let targetPoint: [number, number] | null = null;
-      let targetArea: number | null = null;
-      let targetTotalAssessedValue: number | null = null;
+        let targetPoint: [number, number] | null = null;
+        let targetArea: number | null = null;
+        let targetTotalAssessedValue: number | null = null;
 
-      if (args.target_parcel_number) {
-        if (!args.target_roll_year) {
-          throw new Error("When target_parcel_number is provided, target_roll_year must also be specified.");
+        if (args.target_parcel_number) {
+          if (!args.target_roll_year) {
+            throw new Error("When target_parcel_number is provided, target_roll_year must also be specified.");
+          }
+
+          const lookupWhere = `parcel_number = '${args.target_parcel_number}' AND closed_roll_year = '${args.target_roll_year}'`;
+          const lookupFields = "the_geom, property_area, assessed_improvement_value, assessed_land_value, assessed_fixtures_value";
+          const lookupQuery = `SELECT ${lookupFields} WHERE ${lookupWhere} LIMIT 1`;
+
+          const resp = await client.get(endpoint, { $query: lookupQuery });
+          const data = await resp.json() as any[];
+
+          if (!data || data.length === 0) {
+            throw new Error(`Target parcel '${args.target_parcel_number}' not found.`);
+          }
+
+          const targetData = data[0];
+          if (targetData.the_geom && targetData.the_geom.coordinates) {
+            targetPoint = targetData.the_geom.coordinates;
+          }
+
+          if (targetData.property_area !== undefined) {
+            targetArea = parseFloat(targetData.property_area);
+            if (targetArea === 0) targetArea = null;
+          }
+
+          const toFloat = (val: any) => (val !== undefined && val !== null ? parseFloat(val) : 0);
+          const improvement = toFloat(targetData.assessed_improvement_value);
+          const land = toFloat(targetData.assessed_land_value);
+          const fixtures = toFloat(targetData.assessed_fixtures_value);
+          targetTotalAssessedValue = improvement + land + fixtures;
+          if (targetTotalAssessedValue === 0) targetTotalAssessedValue = null;
         }
 
-        const lookupWhere = `parcel_number = '${args.target_parcel_number}' AND closed_roll_year = '${args.target_roll_year}'`;
-        const lookupFields = "the_geom, property_area, assessed_improvement_value, assessed_land_value, assessed_fixtures_value";
-        const lookupQuery = `SELECT ${lookupFields} WHERE ${lookupWhere} LIMIT 1`;
+        const queryParams: QueryParams = {
+          roll_year: args.roll_year,
+          bedrooms: args.bedrooms,
+          bathrooms: args.bathrooms,
+          parcel_number: args.parcel_number,
+          area_min: args.area_min,
+          area_max: args.area_max,
+          date_start: args.date_start,
+          date_end: args.date_end,
+          district: args.district,
+          neighborhood_code: args.neighborhood_code,
+          property_class_code: args.property_class_code,
+        };
 
-        const resp = await client.get(endpoint, { $query: lookupQuery });
-        const data = await resp.json() as any[];
+        const selectClause = buildSelectClause(targetPoint, targetArea, targetTotalAssessedValue, args.fields);
+        const whereClause = buildWhereClause(queryParams);
+        const orderByClause = buildOrderByClause(targetPoint, targetArea);
 
-        if (!data || data.length === 0) {
-          throw new Error(`Target parcel '${args.target_parcel_number}' not found.`);
+        let soqlQuery = `SELECT ${selectClause}`;
+        if (whereClause) {
+          soqlQuery += ` WHERE ${whereClause}`;
         }
-
-        const targetData = data[0];
-        if (targetData.the_geom && targetData.the_geom.coordinates) {
-          targetPoint = targetData.the_geom.coordinates;
+        if (orderByClause) {
+          soqlQuery += ` ORDER BY ${orderByClause}`;
         }
+        soqlQuery += ` LIMIT ${args.limit} OFFSET ${args.offset}`;
 
-        if (targetData.property_area !== undefined) {
-          targetArea = parseFloat(targetData.property_area);
-          if (targetArea === 0) targetArea = null;
-        }
+        const response = await client.get(endpoint, { $query: soqlQuery });
+        const results = await response.json();
 
-        const toFloat = (val: any) => (val !== undefined && val !== null ? parseFloat(val) : 0);
-        const improvement = toFloat(targetData.assessed_improvement_value);
-        const land = toFloat(targetData.assessed_land_value);
-        const fixtures = toFloat(targetData.assessed_fixtures_value);
-        targetTotalAssessedValue = improvement + land + fixtures;
-        if (targetTotalAssessedValue === 0) targetTotalAssessedValue = null;
+        return {
+          content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+        };
       }
-
-      const queryParams: QueryParams = {
-        roll_year: args.roll_year,
-        bedrooms: args.bedrooms,
-        bathrooms: args.bathrooms,
-        parcel_number: args.parcel_number,
-        area_min: args.area_min,
-        area_max: args.area_max,
-        date_start: args.date_start,
-        date_end: args.date_end,
-        district: args.district,
-        neighborhood_code: args.neighborhood_code,
-        property_class_code: args.property_class_code,
-      };
-
-      const selectClause = buildSelectClause(targetPoint, targetArea, targetTotalAssessedValue, args.fields);
-      const whereClause = buildWhereClause(queryParams);
-      const orderByClause = buildOrderByClause(targetPoint, targetArea);
-
-      let soqlQuery = `SELECT ${selectClause}`;
-      if (whereClause) {
-        soqlQuery += ` WHERE ${whereClause}`;
-      }
-      if (orderByClause) {
-        soqlQuery += ` ORDER BY ${orderByClause}`;
-      }
-      soqlQuery += ` LIMIT ${args.limit} OFFSET ${args.offset}`;
-
-      const response = await client.get(endpoint, { $query: soqlQuery });
-      const results = await response.json();
-
-      return {
-        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
-      };
-    }
-  );
-
-  return server;
+    );
+  }
 }
 
 export default {
   async fetch(request: Request, env: any, ctx: any): Promise<Response> {
-    const server = createServer();
-    return createMcpHandler(server)(request, env, ctx);
+    const url = new URL(request.url);
+    if (url.pathname === "/mcp") {
+      return SFPropertyMCP.serve("/mcp").fetch(request, env, ctx);
+    }
+    return new Response("Not found", { status: 404 });
   },
 };
