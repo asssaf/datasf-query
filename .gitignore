@@ -1,7 +1,5 @@
 node_modules/
 dist/
 .wrangler/
-.pytest_cache/
-__pycache__/
-venv/
-*.spec
+.DS_Store
+*.log

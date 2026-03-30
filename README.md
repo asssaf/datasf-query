@@ -1,47 +1,62 @@
-# SF Property Data CLI
+# SF Property Data MCP Server
 
-This project provides a CLI interface for querying San Francisco property data via the SF Data API (Socrata).
+This project provides a Model Context Protocol (MCP) server for querying San Francisco property data via the SF Data API (Socrata). It is designed to be deployed as a Cloudflare Worker and can be consumed by any MCP-compliant client (e.g., Claude Desktop, Cursor, or the Cloudflare AI Playground).
 
-## Project Structure
-- `main.py`: Entry point for the CLI application.
-- `api_client.py`: Module for handling API requests.
-- `formatter.py`: Module for formatting API responses (JSON and Table).
-- `query_builder.py`: Module for constructing SoQL queries.
-- `tests/`: Directory containing project tests.
-- `conductor/`: Project management and workflow documentation.
+## Features
+- **Query Tool**: Execute complex property searches with filters for roll year, bedrooms, bathrooms, districts, neighborhood codes, and more.
+- **Target Comparison**: Provide a `target_parcel_number` to calculate relative distances and property area/value ratios.
+- **Modern Stack**: Built with TypeScript 6, Zod 4, and Cloudflare Workers (using the `agents` library).
+- **Streamable HTTP**: Uses the latest MCP Streamable HTTP transport for robust remote communication.
 
 ## Getting Started
-To install dependencies and set up the environment, run:
+
+### Prerequisites
+- Node.js and npm installed.
+- (Optional) [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) for deployment.
+
+### Installation
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+npm install --legacy-peer-deps
+```
+*Note: `--legacy-peer-deps` is required to resolve version conflicts between Zod and other dependencies.*
+
+### Local Development
+To run the server locally for testing:
+```bash
+npm start
+```
+By default, the MCP endpoint will be available at `http://localhost:8787/mcp`.
+
+### Deployment
+To deploy your MCP server to Cloudflare Workers:
+```bash
+npm run deploy
+```
+Once deployed, your server will be available at `https://<your-worker-name>.<your-subdomain>.workers.dev/mcp`.
+
+## MCP Configuration
+
+To connect this server to an MCP client like Claude Desktop, add the following to your MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "sf-property-data": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://<your-worker-name>.<your-subdomain>.workers.dev/mcp"
+      ]
+    }
+  }
+}
 ```
 
-## Running the Application
-```bash
-python3 main.py query --help
-```
+## Project Structure
+- `src/index.ts`: Entry point, defines the MCP server and `SFPropertyMCP` agent.
+- `src/apiClient.ts`: Socrata API communication layer.
+- `src/queryBuilder.ts`: SoQL (Socrata Query Language) construction logic.
+- `wrangler.jsonc`: Cloudflare Worker configuration.
 
-### Example Usage
-```bash
-# Query properties with 2 bedrooms in district 9, formatted as a table
-python3 main.py query --bedrooms 2 --district 9 --format table
-```
-
-## Running Tests
-```bash
-venv/bin/pytest
-```
-
-## Running Tests with Coverage
-```bash
-venv/bin/pytest --cov=.
-```
-
-## Generating Standalone Binary
-To generate a standalone executable using PyInstaller:
-```bash
-pyinstaller main.spec
-```
-The binary will be located in the `dist/` directory.
+## License
+MIT

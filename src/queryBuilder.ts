@@ -108,15 +108,22 @@ export function buildOrderByClause(
   return orderParts.length > 0 ? orderParts.join(", ") : null;
 }
 
+function formatSocrataNumber(val: number | string): string {
+  const num = typeof val === 'string' ? parseFloat(val) : val;
+  if (isNaN(num)) return String(val);
+  // Socrata often stores numbers as strings with one decimal place, e.g., "2.0"
+  return num.toFixed(1);
+}
+
 export function buildWhereClause(params: QueryParams): string {
   const filters: string[] = [];
 
   if (params.bedrooms !== undefined) {
-    filters.push(`number_of_bedrooms = '${params.bedrooms}'`);
+    filters.push(`number_of_bedrooms = '${formatSocrataNumber(params.bedrooms)}'`);
   }
 
   if (params.bathrooms !== undefined) {
-    filters.push(`number_of_bathrooms = '${params.bathrooms}'`);
+    filters.push(`number_of_bathrooms = '${formatSocrataNumber(params.bathrooms)}'`);
   }
 
   if (params.parcel_number) {
